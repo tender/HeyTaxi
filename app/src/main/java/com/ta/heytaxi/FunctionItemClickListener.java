@@ -10,7 +10,7 @@ import android.widget.Toast;
  * Created by IT-0002993 on 16/3/22.
  */
 public class FunctionItemClickListener implements AdapterView.OnItemClickListener {
-    private static final int START_LOCATION = 2;
+    private static final int START_LOCATION = 0;
     private Activity activity;
 
 
