@@ -1,6 +1,7 @@
 package com.ta.heytaxi;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -30,16 +31,18 @@ public class MainActivity extends AppCompatActivity {
         context=getApplicationContext();
         DriverFunctionAdapter adapter=new DriverFunctionAdapter(functionItemsForDriver,context);
         gridView = (GridView) findViewById(R.id.gridView);
-        gridView.setAdapter(adapter);
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String value=((FunctionItem)parent.getAdapter().getItem(position)).getName();
-                Toast.makeText(context,value+"."+position,Toast.LENGTH_SHORT).show();
-            }
-        });
 
-                //new FunctionItemClickListener());
+        gridView.setAdapter(adapter);
+//        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                String value=((FunctionItem)parent.getAdapter().getItem(position)).getName();
+//                Toast.makeText(context,value+".xx"+position,Toast.LENGTH_SHORT).show();
+//
+//            }
+//        });
+        gridView.setOnItemClickListener(new FunctionItemClickListener(this));
+
 
     }
 
