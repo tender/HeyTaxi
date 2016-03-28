@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">HeyTaxi</string>
+    <string-array name="appFunctionsForDriver">
+        <item>acquire_order</item>
+        <item>acquire_order</item>
+        <item>acquire_order</item>
+        <item>acquire_order</item>
+        <item>acquire_order</item>
+        <item>acquire_order</item>
+        <item>acquire_order</item>
+        <item>acquire_order</item>
+        <item>acquire_order</item>
+
+
+    </string-array>
+    <string-array name="appFunctionsForCustomer">
+        <item>acquire_order</item>
+
+    </string-array>
+
+    <string name="acquire_order">搶單</string>
+
+</resources>
