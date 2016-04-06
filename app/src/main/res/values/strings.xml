@@ -21,4 +21,8 @@
     <string name="acquire_order">搶單</string>
     <string name="title_activity_maps">Map</string>
 
+
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
+         AIzaSyD4cTFq4HLZ9K58amCnD5uilkdiMR72pdE
+    </string>
 </resources>
