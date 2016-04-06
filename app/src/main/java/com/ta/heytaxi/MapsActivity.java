@@ -2,6 +2,7 @@ package com.ta.heytaxi;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.Location;
 
 import android.location.LocationManager;
@@ -25,15 +26,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback ,GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener,LocationListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     private GoogleMap mMap;
     private GoogleApiClient googleApiClient;
     private LocationRequest locationRequest;
     private LocationManager locationManager;
     private android.location.LocationListener locationListener;
-    private Double longitude=0.0 ;
-    private Double latitude=0.0;
+    private Double longitude = 0.0;
+    private Double latitude = 0.0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,11 +61,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-//        try {
-//            mMap.setMyLocationEnabled(true);
-//        }catch(SecurityException e){
-//            Log.e("Map","  ",e);
-//        }
+        try {
+            mMap.setMyLocationEnabled(true);
+        }catch(SecurityException e){
+            Log.e("Map","  ",e);
+        }
 
         if (!googleApiClient.isConnected()) {
             googleApiClient.connect();
@@ -80,7 +81,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    public void configMapReady(){
+    public void configMapReady() {
         configGoogleApiClient();
 
     }
@@ -103,7 +104,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // 設定讀取位置資訊最快的間隔時間為一秒（1000ms）
         locationRequest.setFastestInterval(1000);
         // 設定優先讀取高精確度的位置資訊（GPS）
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        //locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+
+        locationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
+
     }
 
     private void moveMap(LatLng place) {
@@ -124,20 +129,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setUpMapIfNeeded();
 
         // 連線到Google API用戶端
-        if (!googleApiClient.isConnected() ) {
+        if (!googleApiClient.isConnected()) {
             googleApiClient.connect();
         }
     }
+
     @Override
     protected void onPause() {
         super.onPause();
 
         // 移除位置請求服務
         if (googleApiClient.isConnected()) {
-            //LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient,locationListener);
+            LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, (LocationListener) locationListener);
 
         }
     }
+
+    @Override
+    protected void onStart() {
+        googleApiClient.connect();
+        super.onStart();
+    }
+
 
     @Override
     protected void onStop() {
@@ -147,6 +160,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (googleApiClient.isConnected()) {
             googleApiClient.disconnect();
         }
+
     }
 
     private void setUpMapIfNeeded() {
@@ -188,13 +202,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         };
         try {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, new Long(0).longValue(), new Float(0).floatValue(), locationListener);
-        }catch(SecurityException e){
-            Log.e("Map","  ",e);
+        } catch (SecurityException e) {
+            Log.e("Map", "  ", e);
         }
 
     }
+
     @Override
     public void onConnected(Bundle bundle) {
+        //LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, MapsActivity.this)
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+
 
     }
 
@@ -205,6 +233,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
+
+        // 位置改變
+        // Location參數是目前的位置
+//        currentLocation = location;
+        LatLng latLng = new LatLng(
+                location.getLatitude(), location.getLongitude());
+//
+//        // 設定目前位置的標記
+//        if (currentMarker == null) {
+//            currentMarker = mMap.addMarker(new MarkerOptions().position(latLng));
+//        }
+//        else {
+//            currentMarker.setPosition(latLng);
+//        }
+
+        // 移動地圖到目前的位置
+        moveMap(latLng);
 
     }
 
