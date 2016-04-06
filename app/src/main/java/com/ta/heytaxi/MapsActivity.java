@@ -4,10 +4,10 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
-
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -16,7 +16,6 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -214,6 +213,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    @RequiresPermission(anyOf = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION})
     public void UpdateLocation() {
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = new android.location.LocationListener() {
@@ -238,11 +238,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         };
-        try {
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, getLongitude().longValue(), getLatitude().floatValue(), locationListener);
-        }catch(SecurityException e){
-            Log.e("Map",e.getMessage());
+
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
         }
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, getLongitude().longValue(), getLatitude().floatValue(), locationListener);
+//        try {
+//            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, getLongitude().longValue(), getLatitude().floatValue(), locationListener);
+//        }catch(SecurityException e){
+//            Log.e("Map",e.getMessage());
+//        }
     }
 
     @Override
