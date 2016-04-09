@@ -19,6 +19,6 @@
         android:gravity="center"
         android:paddingTop = "15px"
         android:paddingBottom = "15px"
-        android:textColor="#daf40f">
+        android:textColor="#FFF48D0F">
     </TextView>
 </LinearLayout>

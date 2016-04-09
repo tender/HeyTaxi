@@ -2,8 +2,8 @@
     <string name="app_name">HeyTaxi</string>
     <string-array name="appFunctionsForDriver">
         <item>acquire_order</item>
-        <item>acquire_order</item>
-        <item>acquire_order</item>
+        <item>service_01</item>
+        <item>service_02</item>
         <item>acquire_order</item>
         <item>acquire_order</item>
         <item>acquire_order</item>
@@ -19,6 +19,9 @@
     </string-array>
 
     <string name="acquire_order">搶單</string>
+    <string name="service_01">設定</string>
+    <string name="service_02">註冊</string>
+
     <string name="title_activity_maps">Map</string>
 
 

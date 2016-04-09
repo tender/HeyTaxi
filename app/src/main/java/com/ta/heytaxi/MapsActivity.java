@@ -2,15 +2,18 @@ package com.ta.heytaxi;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -51,10 +54,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
         configMapReady();
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+
+        setUpMapIfNeeded();
+
+        // 建立Google API用戶端物件
+        configGoogleApiClient();
+
+        // 建立Location請求物件
+        configLocationRequest();
+
+        // 連線到Google API用戶端
+        if (!googleApiClient.isConnected()) {
+            googleApiClient.connect();
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        //updateLocation();
     }
 
 
@@ -71,13 +96,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        mMap.setMyLocationEnabled(true);
 
         if (!googleApiClient.isConnected()) {
             googleApiClient.connect();
         }
 
+        Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+
         // Add a marker in Sydney and move the camera
-        UpdateLocation();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        updateLocation();
 
         LatLng currentPlace = new LatLng(getLongitude(), getLatitude());
         mMap.addMarker(new MarkerOptions().position(currentPlace).title("Marker in Taipei"));
@@ -109,10 +147,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // 設定讀取位置資訊最快的間隔時間為一秒（1000ms）
         locationRequest.setFastestInterval(1000);
         // 設定優先讀取高精確度的位置資訊（GPS）
-        //locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
 
-        locationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
+        //locationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
 
     }
 
@@ -145,59 +183,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // 移除位置請求服務
         if (googleApiClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, (LocationListener) locationListener);
-
+            LocationServices.FusedLocationApi.removeLocationUpdates(
+                    googleApiClient, this);
         }
     }
 
+
     @Override
     protected void onStart() {
-        googleApiClient.connect();
+
         super.onStart();
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Maps Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app URL is correct.
-                Uri.parse("android-app://com.ta.heytaxi/http/host/path")
-        );
-        AppIndex.AppIndexApi.start(client, viewAction);
+        googleApiClient.connect();
     }
+
 
 
     @Override
     protected void onStop() {
         super.onStop();
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Maps Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app URL is correct.
-                Uri.parse("android-app://com.ta.heytaxi/http/host/path")
-        );
-        AppIndex.AppIndexApi.end(client, viewAction);
 
         // 移除Google API用戶端連線
         if (googleApiClient.isConnected()) {
             googleApiClient.disconnect();
         }
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.disconnect();
     }
 
     private void setUpMapIfNeeded() {
@@ -214,7 +222,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @RequiresPermission(anyOf = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION})
-    public void UpdateLocation() {
+    public void updateLocation() {
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = new android.location.LocationListener() {
             public void onLocationChanged(Location newLocation) {
@@ -260,7 +268,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onConnected(Bundle bundle) {
-        //LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, MapsActivity.this)
+        // 已經連線到Google Services
+        // 啟動位置更新服務
+        // 位置資訊更新的時候，應用程式會自動呼叫LocationListener.onLocationChanged
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -271,7 +281,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, MapsActivity.this);
 
 
     }
@@ -305,7 +315,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
+        // Google Services連線失敗
+        // ConnectionResult參數是連線失敗的資訊
+        int errorCode = connectionResult.getErrorCode();
 
+        // 裝置沒有安裝Google Play服務
+        if (errorCode == ConnectionResult.SERVICE_MISSING) {
+            Toast.makeText(this, "google_play_service_missing",
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
 
