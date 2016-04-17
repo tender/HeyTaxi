@@ -1,38 +1,29 @@
 package com.ta.heytaxi;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
-import android.support.annotation.RequiresPermission;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.widget.Toast;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+//public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
+    private Context context;
     private GoogleMap mMap;
     private GoogleApiClient googleApiClient;
     private LocationRequest locationRequest;
@@ -40,11 +31,253 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private android.location.LocationListener locationListener;
     private Double longitude = 0.0;
     private Double latitude = 0.0;
+
+    private LatLng defaultTaipei=new LatLng(25.047924, 121.517081);
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_maps);
+        context=this;
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+    }
+
+    @SuppressWarnings("MissingPermission")
+    @Override
+    public void onMapReady(GoogleMap map) {
+        mMap=map;
+        setMapInfomation();
+        // Add a marker in Sydney, Australia, and move the camera.
+
+        mMap.addMarker(new MarkerOptions().position(defaultTaipei).title("Marker in Taipei"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultTaipei));
+        moveMap(defaultTaipei);
+    }
+
+    @SuppressWarnings("MissingPermission")
+    private void setMapInfomation(){
+
+        // 設定地圖類型
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        // 地圖上顯示建築物
+        // 注意：zoom的設定要 >=17才會顯示建築物
+        mMap.setBuildingsEnabled(true);
+
+        // 顯示目前所在位置
+        mMap.setMyLocationEnabled(true);
+
+        // Google地圖使用者操作界面功能設定
+        UiSettings ui = mMap.getUiSettings();
+        // 開啟/關閉縮放鈕
+        ui.setZoomControlsEnabled(true);
+        // 開啟/關閉地圖捲動手勢
+        ui.setScrollGesturesEnabled(true);
+        // 開啟/關閉地圖縮放手勢
+        ui.setZoomGesturesEnabled(true);
+        // 開啟/關閉地圖傾斜手勢
+        ui.setTiltGesturesEnabled(true);
+        // 開啟/關閉地圖旋轉手勢
+        ui.setRotateGesturesEnabled(true);
+
+        //noinspection ResourceType
+        mMap.setMyLocationEnabled(true);
+
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                String address = Helper.getAddressByLatLng(latLng);
+                if(address==null){
+                    Toast.makeText(context,"Not Found",Toast.LENGTH_SHORT).show();
+                }else{
+                    Toast.makeText(context,address,Toast.LENGTH_SHORT).show();
+                    playAnimateCamera(latLng,3000);
+                    drawMarker(latLng);
+                }
+            }
+        });
+    }
+
+    private void moveMap(LatLng place) {
+        // 建立地圖攝影機的位置物件
+        CameraPosition cameraPosition =
+                new CameraPosition.Builder()
+                        .target(place)
+                        .zoom(17)
+                        .bearing(300)
+                        .tilt(0)
+                        .build();
+
+        // 使用動畫的效果移動地圖
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    }
+
+
+
+    private void playAnimateCamera(LatLng latlng, int durationMs) {
+        // 設置相關地圖相機位置參數，其中zoom的設定要 >=17才會顯示建築物
+        CameraPosition cameraPos = new CameraPosition.Builder().target(latlng)
+                .zoom(17.0f).bearing(300).tilt(45).build();
+        // 定義地圖相機移動
+        CameraUpdate cameraUpt = CameraUpdateFactory
+                .newCameraPosition(cameraPos);
+        // 地圖相機動畫行程設定
+        mMap.animateCamera(cameraUpt, durationMs, null);
+    }
+
+    private void drawMarker(LatLng latLng) {
+
+        // 1.建立 Marker
+        MarkerOptions options = new MarkerOptions(); // 建立標記選項的實例
+        options.position(latLng); // 標記經緯度
+        options.title(""); // Info-Window標題
+        options.snippet("緯經度:" + latLng); // Info-Window標記摘要
+        options.anchor(0.5f, 1.0f); // 錨點
+        options.draggable(true); // 是否可以拖曳標記?
+        // 2.將Marker加入到地圖中
+        mMap.addMarker(options);
+        // 3.移動到Marker
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+    }
+    @Override
+    protected void onResume() throws SecurityException {
+        super.onResume();
+
+//        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 60000, 1, locationListener);
+//        setUpMapIfNeeded();
+//
+//        // 連線到Google API用戶端
+//        if (!googleApiClient.isConnected()) {
+//            googleApiClient.connect();
+//        }
+
+    }
+
+    @Override
+    protected void onPause() throws SecurityException{
+        super.onPause();
+//        locationManager.removeUpdates(locationListener);
+//        // 移除位置請求服務
+//        if (googleApiClient.isConnected()) {
+//            LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+//        }
+    }
+
+
+    @Override
+    protected void onStart() {
+
+        super.onStart();
+//        googleApiClient.connect();
+    }
+
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+//
+//        // 移除Google API用戶端連線
+//        if (googleApiClient.isConnected()) {
+//            googleApiClient.disconnect();
+//        }
+    }
+
+
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
      */
     private GoogleApiClient client;
+
+/*
+    private Context context;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) throws SecurityException {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_maps);
+        setUpMapIfNeeded();
+        context = this;
+
+        GoogleMap m_map = ((SupportMapFragment)
+                getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+        mMap.setMyLocationEnabled(true);
+
+
+
+        // 設定地圖類型
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        // 地圖上顯示建築物
+        // 注意：zoom的設定要 >=17才會顯示建築物
+        mMap.setBuildingsEnabled(true);
+
+        // 顯示目前所在位置
+        mMap.setMyLocationEnabled(true);
+
+        // Google地圖使用者操作界面功能設定
+        UiSettings ui = mMap.getUiSettings();
+        // 開啟/關閉縮放鈕
+        ui.setZoomControlsEnabled(true);
+        // 開啟/關閉地圖捲動手勢
+        ui.setScrollGesturesEnabled(true);
+        // 開啟/關閉地圖縮放手勢
+        ui.setZoomGesturesEnabled(true);
+        // 開啟/關閉地圖傾斜手勢
+        ui.setTiltGesturesEnabled(true);
+        // 開啟/關閉地圖旋轉手勢
+        ui.setRotateGesturesEnabled(true);
+
+        // 按一下地圖即可取得該點經緯度
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng point) {
+                // 根據point取得該經緯度所對應的地址/地標
+                String address = Helper.getAddressByLatLng(point);
+                if (address == null) {
+                    Toast.makeText(context, "Not found !", Toast.LENGTH_SHORT)
+                            .show();
+                } else {
+                    Toast.makeText(context, address, Toast.LENGTH_SHORT).show();
+                    // 演示地圖相機動畫效果
+                    playAnimateCamera(point, 3000);
+                }
+            }
+        });
+    }
+
+
+    private void setUpMapIfNeeded() {
+        // Do a null check to confirm that we have not already instantiated the map.
+        if (mMap == null) {
+            // Try to obtain the map from the SupportMapFragment.
+            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
+                    .getMap();
+            // Check if we were successful in obtaining the map.
+            if (mMap != null) {
+                setUpMap();
+            }
+        }
+    }
+
+    private void playAnimateCamera(LatLng latlng, int durationMs) {
+        // 設置相關地圖相機位置參數，其中zoom的設定要 >=17才會顯示建築物
+        CameraPosition cameraPos = new CameraPosition.Builder().target(latlng)
+                .zoom(17.0f).bearing(300).tilt(45).build();
+        // 定義地圖相機移動
+        CameraUpdate cameraUpt = CameraUpdateFactory
+                .newCameraPosition(cameraPos);
+        // 地圖相機動畫行程設定
+        mMap.animateCamera(cameraUpt, durationMs, null);
+    }
+
+    private void setUpMap() {
+        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+    }*/
+
+/*
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,25 +298,60 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // 建立Location請求物件
         configLocationRequest();
 
+
         // 連線到Google API用戶端
         if (!googleApiClient.isConnected()) {
             googleApiClient.connect();
         }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        //updateLocation();
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Log.i("Test",String.valueOf(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)));
+        updateLocation();
     }
 
 
-    /**
+    private void setMapInfomation() throws SecurityException{
+        // 設定地圖類型
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        // 地圖上顯示建築物
+        // 注意：zoom的設定要 >=17才會顯示建築物
+        mMap.setBuildingsEnabled(true);
+
+        // Google地圖使用者操作界面功能設定
+        UiSettings ui = mMap.getUiSettings();
+        // 開啟/關閉縮放鈕
+        ui.setZoomControlsEnabled(true);
+        // 開啟/關閉地圖捲動手勢
+        ui.setScrollGesturesEnabled(true);
+        // 開啟/關閉地圖縮放手勢
+        ui.setZoomGesturesEnabled(true);
+        // 開啟/關閉地圖傾斜手勢
+        ui.setTiltGesturesEnabled(true);
+        // 開啟/關閉地圖旋轉手勢
+        ui.setRotateGesturesEnabled(true);
+
+*/
+/*        // 按一下地圖即可取得該點經緯度
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng point) {
+                // 根據point取得該經緯度所對應的地址/地標
+                String address = Helper.getAddressByLatLng(point);
+                if (address == null) {
+                    Toast.makeText(context, "Not found !", Toast.LENGTH_SHORT)
+                            .show();
+                } else {
+                    Toast.makeText(context, address, Toast.LENGTH_SHORT).show();
+                    // 演示地圖相機動畫效果
+                    playAnimateCamera(point, 3000);
+                }
+            }
+        });*//*
+
+    }
+
+    */
+/**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
      * This is where we can add markers or lines, add listeners or move the camera. In this case,
@@ -91,32 +359,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * If Google Play services is not installed on the device, the user will be prompted to install
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        mMap.setMyLocationEnabled(true);
+     *//*
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) throws SecurityException{
+        mMap = googleMap;
         if (!googleApiClient.isConnected()) {
             googleApiClient.connect();
         }
 
-        Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-
-        // Add a marker in Sydney and move the camera
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
         updateLocation();
-
+        setMapInfomation();
         LatLng currentPlace = new LatLng(getLongitude(), getLatitude());
         mMap.addMarker(new MarkerOptions().position(currentPlace).title("Marker in Taipei"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(currentPlace));
@@ -126,7 +379,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void configMapReady() {
         configGoogleApiClient();
-
     }
 
     // 建立Google API用戶端物件
@@ -167,24 +419,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    protected void onResume() {
+    protected void onResume() throws SecurityException {
         super.onResume();
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 60000, 1, locationListener);
         setUpMapIfNeeded();
 
         // 連線到Google API用戶端
         if (!googleApiClient.isConnected()) {
             googleApiClient.connect();
         }
+
     }
 
     @Override
-    protected void onPause() {
+    protected void onPause() throws SecurityException{
         super.onPause();
-
+        locationManager.removeUpdates(locationListener);
         // 移除位置請求服務
         if (googleApiClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(
-                    googleApiClient, this);
+            LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
         }
     }
 
@@ -215,15 +469,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             if (mMap != null) {
                 // 移除地圖設定
-                //setUpMap();
+                setUpMap();
                 //processController();
             }
         }
     }
 
-    @RequiresPermission(anyOf = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION})
-    public void updateLocation() {
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    private void setUpMap(){
+        mMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(0, 0))
+                        .title("Marker")
+        );
+    }
+
+
+    public void updateLocation() throws SecurityException{
+        //locationManager = (LocationManager) getBaseContext().getSystemService(Context.LOCATION_SERVICE);
         locationListener = new android.location.LocationListener() {
             public void onLocationChanged(Location newLocation) {
                 setLongitude(newLocation.getLongitude() * 1000000);
@@ -248,39 +509,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         };
 
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        Location location=locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        if(location==null){
+            setLongitude(25.047924);
+            setLatitude(121.517081);
+        }else{
+            setLongitude(location.getLongitude());
+            setLatitude(location.getLatitude());
         }
+
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, getLongitude().longValue(), getLatitude().floatValue(), locationListener);
-//        try {
-//            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, getLongitude().longValue(), getLatitude().floatValue(), locationListener);
-//        }catch(SecurityException e){
-//            Log.e("Map",e.getMessage());
-//        }
+
     }
 
     @Override
-    public void onConnected(Bundle bundle) {
+    public void onConnected(Bundle bundle) throws SecurityException{
         // 已經連線到Google Services
         // 啟動位置更新服務
         // 位置資訊更新的時候，應用程式會自動呼叫LocationListener.onLocationChanged
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, MapsActivity.this);
 
 
@@ -342,4 +588,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
     }
+*/
 }
