@@ -2,8 +2,15 @@ package com.ta.heytaxi;
 
 import android.content.Context;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.widget.ThemedSpinnerAdapter;
+import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -19,9 +26,15 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+
 
 //public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback , AdapterView.OnItemClickListener{
 
     private Context context;
     private GoogleMap mMap;
@@ -34,6 +47,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private LatLng defaultTaipei=new LatLng(25.047924, 121.517081);
 
+    ListView orderListView;
+    private CustomerOrderAdapter adapter;
+    private List<CustomerOrder> items;
+    private List<CustomerOrder> itemsForMap;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +60,54 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
+        orderListView=(ListView) findViewById(R.id.orderlistView);
+        items=createOrderItems();
+        itemsForMap = createOrderItems();
+        //Collections.copy(itemsForMap, items);
+
+        adapter=new CustomerOrderAdapter(items,this);
+        orderListView.setAdapter(adapter);
+        orderListView.setOnItemClickListener(this);
+
+
+
+    }
+
+    private List<CustomerOrder> createOrderItems(){
+        Random rand = new Random();
+        List<CustomerOrder> result=new ArrayList<CustomerOrder>();
+        CustomerOrder order;
+        LatLng latLng;
+        int imageResourceId=getResources().getIdentifier("service_01", "drawable", this.getPackageName());;
+        for(int i=0;i<20;i++){
+            order=new CustomerOrder();
+            order.setImageResource(imageResourceId);
+            order.setOrderNO("00000"+i);
+            int  x = ((rand.nextInt(2) + 1) % 2==0)?-1:1;
+            int  y = ((rand.nextInt(2) + 1) % 2==0)?-1:1;
+            latLng=new LatLng(defaultTaipei.latitude-(i*x*0.0003),defaultTaipei.longitude-(i*y*0.0005));
+            //order.setCurrentLocation(Helper.getAddressByLatLng(latLng));
+            order.setCurrentLocationByLatLng(latLng);
+            result.add(order);
+        }
+        return result;
+    }
+
+    private void putCustomerOrderInfoToMap(List<CustomerOrder> _items){
+        for(CustomerOrder _item:_items){
+            Log.i("CustomerOrder",_item.toString());
+            drawMarker(_item.getCurrentLocationByLatLng());
+        }
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        LatLng value=((CustomerOrder)parent.getAdapter().getItem(position)).getCurrentLocationByLatLng();
+        playAnimateCamera(value,3000);
+        //drawMarker(value);
+        moveMap(value);
     }
 
     @SuppressWarnings("MissingPermission")
@@ -53,7 +119,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap.addMarker(new MarkerOptions().position(defaultTaipei).title("Marker in Taipei"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultTaipei));
-        moveMap(defaultTaipei);
+        //moveMap(defaultTaipei);
+        putCustomerOrderInfoToMap(itemsForMap);
     }
 
     @SuppressWarnings("MissingPermission")
@@ -94,6 +161,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Toast.makeText(context,address,Toast.LENGTH_SHORT).show();
                     playAnimateCamera(latLng,3000);
                     drawMarker(latLng);
+                    moveMap(latLng);
                 }
             }
         });

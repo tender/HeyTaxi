@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">HeyTaxi</string>
+    <string name="google_app_id">790090227937</string>
+    <!--adept-rock-127306-->
+
     <string-array name="appFunctionsForDriver">
         <item>acquire_order</item>
         <item>service_01</item>
@@ -28,4 +31,7 @@
     <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
          AIzaSyD4cTFq4HLZ9K58amCnD5uilkdiMR72pdE
     </string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
