@@ -59,8 +59,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     ListView orderListView;
     private CustomerOrderAdapter adapter;
     private List<CustomerOrder> items;
-    private List<MarkerOptions> mapMarkers;
     LatLng currentLocation;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,15 +74,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         orderListView=(ListView) findViewById(R.id.orderlistView);
         items=createOrderItems();
-        //itemsForMap = createOrderItems();
-        //Collections.copy(itemsForMap, items);
 
         adapter=new CustomerOrderAdapter(items,this);
         orderListView.setAdapter(adapter);
         orderListView.setOnItemClickListener(this);
 
 
-        updateLocation();
+        //updateLocation();
 
     }
 
@@ -141,21 +139,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }else{
                 drawMarker(_item.getCurrentLocationByLatLng(),isFirst);
             }
-
-            marker=new MarkerOptions();
-            marker.position(_item.getCurrentLocationByLatLng());
-            getMapMarkers().add(marker);
-
+        }
+        if(_items.size()>0) {
+            moveMap(_items.get(0).getCurrentLocationByLatLng());
         }
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        reloadMarker();
+        replaceMarker(currentLocation);
         LatLng value=((CustomerOrder)parent.getAdapter().getItem(position)).getCurrentLocationByLatLng();
+
         playAnimateCamera(value,3000);
         drawMarker(value,true);
         moveMap(value);
+        setCurrentLocation(value);
     }
 
     @SuppressWarnings("MissingPermission")
@@ -169,7 +167,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultTaipei));
         //moveMap(defaultTaipei);
 
-        setMapMarkers(new ArrayList<MarkerOptions>());
         putCustomerOrderInfoToMap(items);
 
 
@@ -272,11 +269,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    private void reloadMarker(){
-        for(MarkerOptions item:getMapMarkers()){
-            drawMarker(item.getPosition());
+    private void replaceMarker(LatLng latLng){
+        if(currentLocation!=null) {
+            drawMarker(latLng);
         }
-
     }
 
 
@@ -288,12 +284,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         this.items = items;
     }
 
-    public List<MarkerOptions> getMapMarkers() {
-        return mapMarkers;
+    public LatLng getCurrentLocation() {
+        return currentLocation;
     }
 
-    public void setMapMarkers(List<MarkerOptions> mapMarkers) {
-        this.mapMarkers = mapMarkers;
+    public void setCurrentLocation(LatLng currentLocation) {
+        this.currentLocation = currentLocation;
     }
 
     @Override

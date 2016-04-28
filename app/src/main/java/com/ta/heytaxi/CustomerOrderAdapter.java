@@ -55,7 +55,7 @@ public class CustomerOrderAdapter extends BaseAdapter{
         holder.image.setScaleType(ImageView.ScaleType.FIT_XY);
         holder.image.setImageResource(item.getImageResource());
 
-        holder.text.setText(item.getOrderNO());
+        holder.text.setText(item.getOrderNO()+"\r\n"+item.getCurrentLocation());
 
         return v;
     }

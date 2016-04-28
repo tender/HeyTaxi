@@ -27,7 +27,7 @@
             android:layout_gravity="center_horizontal|top"
             android:layout_below="@+id/map"
             tools:listitem="@android:layout/simple_list_item_single_choice"
-            android:minHeight="50dp" />
+            />
 
 <!--        <fragment
             android:id="@+id/order"
