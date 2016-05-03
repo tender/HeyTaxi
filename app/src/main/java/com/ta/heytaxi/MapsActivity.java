@@ -1,25 +1,22 @@
 package com.ta.heytaxi;
 
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Color;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.CalendarContract;
-import android.provider.Settings;
-import android.support.v4.app.Fragment;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.graphics.ColorUtils;
-import android.support.v7.widget.ThemedSpinnerAdapter;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -32,60 +29,71 @@ import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 
-//public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback , AdapterView.OnItemClickListener{
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
 
+{
+    protected static final String TAG = "MainActivity";
     private Context context;
     private GoogleMap mMap;
-    private GoogleApiClient googleApiClient;
-    private LocationRequest locationRequest;
+    private GoogleApiClient mGoogleApiClient;
+    private LocationRequest mLocationRequest;
     private LocationManager locationManager;
     private android.location.LocationListener locationListener;
     private Double longitude = 0.0;
     private Double latitude = 0.0;
 
-    private LatLng defaultTaipei=new LatLng(25.047924, 121.517081);
+    private LatLng defaultTaipei = new LatLng(25.047924, 121.517081);
 
-    ListView orderListView;
+    private ListView orderListView;
     private CustomerOrderAdapter adapter;
     private List<CustomerOrder> items;
-    LatLng currentLocation;
-
+    private LatLng currentLocation;
+    private Location mLastLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        context=this;
+        context = this;
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        buildGoogleApiClient();
 
-        orderListView=(ListView) findViewById(R.id.orderlistView);
-        items=createOrderItems();
+        orderListView = (ListView) findViewById(R.id.orderlistView);
+        items = createOrderItems();
 
-        adapter=new CustomerOrderAdapter(items,this);
+        adapter = new CustomerOrderAdapter(items, this);
         orderListView.setAdapter(adapter);
         orderListView.setOnItemClickListener(this);
 
-
+        updateLocation();
+        Log.i(TAG,"001");
         //updateLocation();
 
     }
 
+    /**
+     * Builds a GoogleApiClient. Uses the addApi() method to request the LocationServices API.
+     */
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+
     @SuppressWarnings("MissingPermission")
-    protected void updateLocation(){
+    protected void updateLocation() {
 
         // Acquire a reference to the system Location Manager
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -94,31 +102,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LocationListener locationListener = new OrderLocationListener();
 
         // Register the listener with the Location Manager to receive location updates
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 9000, 0, locationListener);
 
-//        Location location=locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-//        Log.i("current location",location.toString());
-
+        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        Log.i("current location", String.valueOf(location));
+        Log.i(TAG,"002");
     }
 
-    private void makeUseOfNewLocation(Location location){
-        Log.i("current location",String.valueOf(location.getLatitude()));
-        Log.i("current location",String.valueOf(location.getLongitude()));
+    private void makeUseOfNewLocation(Location location) {
+        Log.i("current location", String.valueOf(location.getLatitude()));
+        Log.i("current location", String.valueOf(location.getLongitude()));
     }
 
-    private List<CustomerOrder> createOrderItems(){
+    private List<CustomerOrder> createOrderItems() {
         Random rand = new Random();
-        List<CustomerOrder> result=new ArrayList<CustomerOrder>();
+        List<CustomerOrder> result = new ArrayList<CustomerOrder>();
         CustomerOrder order;
         LatLng latLng;
-        int imageResourceId=getResources().getIdentifier("service_01", "drawable", this.getPackageName());;
-        for(int i=0;i<20;i++){
-            order=new CustomerOrder();
+        int imageResourceId = getResources().getIdentifier("service_01", "drawable", this.getPackageName());
+        ;
+        for (int i = 0; i < 20; i++) {
+            order = new CustomerOrder();
             order.setImageResource(imageResourceId);
-            order.setOrderNO("00000"+i);
-            int  x = ((rand.nextInt(2) + 1) % 2==0)?-1:1;
-            int  y = ((rand.nextInt(2) + 1) % 2==0)?-1:1;
-            latLng=new LatLng(defaultTaipei.latitude-(i*x*0.0003),defaultTaipei.longitude-(i*y*0.0005));
+            order.setOrderNO("00000" + i);
+            int x = ((rand.nextInt(2) + 1) % 2 == 0) ? -1 : 1;
+            int y = ((rand.nextInt(2) + 1) % 2 == 0) ? -1 : 1;
+            latLng = new LatLng(defaultTaipei.latitude - (i * x * 0.0003), defaultTaipei.longitude - (i * y * 0.0005));
             //order.setCurrentLocation(Helper.getAddressByLatLng(latLng));
             order.setCurrentLocationByLatLng(latLng);
             result.add(order);
@@ -126,21 +135,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return result;
     }
 
-    private void putCustomerOrderInfoToMap(List<CustomerOrder> _items){
-        boolean isFirst=true;
-        MarkerOptions marker=null;
-        for(CustomerOrder _item:_items){
-            Log.i("CustomerOrder",_item.toString());
+    private void putCustomerOrderInfoToMap(List<CustomerOrder> _items) {
+        boolean isFirst = true;
+        MarkerOptions marker = null;
+        for (CustomerOrder _item : _items) {
+            Log.i("CustomerOrder", _item.toString());
 
-            if(isFirst){
-                drawMarker(_item.getCurrentLocationByLatLng(),isFirst);
-                currentLocation=_item.getCurrentLocationByLatLng();
-                isFirst=false;
-            }else{
-                drawMarker(_item.getCurrentLocationByLatLng(),isFirst);
+            if (isFirst) {
+                drawMarker(_item.getCurrentLocationByLatLng(), isFirst);
+                currentLocation = _item.getCurrentLocationByLatLng();
+                isFirst = false;
+            } else {
+                drawMarker(_item.getCurrentLocationByLatLng(), isFirst);
             }
         }
-        if(_items.size()>0) {
+        if (_items.size() > 0) {
             moveMap(_items.get(0).getCurrentLocationByLatLng());
         }
     }
@@ -148,18 +157,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         replaceMarker(currentLocation);
-        LatLng value=((CustomerOrder)parent.getAdapter().getItem(position)).getCurrentLocationByLatLng();
+        LatLng value = ((CustomerOrder) parent.getAdapter().getItem(position)).getCurrentLocationByLatLng();
 
-        playAnimateCamera(value,3000);
-        drawMarker(value,true);
+        playAnimateCamera(value, 3000);
+        drawMarker(value, true);
         moveMap(value);
         setCurrentLocation(value);
+
     }
 
-    @SuppressWarnings("MissingPermission")
+    //@SuppressWarnings("MissingPermission")
     @Override
     public void onMapReady(GoogleMap map) {
-        mMap=map;
+        mMap = map;
         setMapInfomation();
         // Add a marker in Sydney, Australia, and move the camera.
 
@@ -167,13 +177,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultTaipei));
         //moveMap(defaultTaipei);
 
-        putCustomerOrderInfoToMap(items);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
+            mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setMyLocationButtonEnabled(true);
+        }
+
+        updateLocation();
+        putCustomerOrderInfoToMap(items);
+        Log.i(TAG,"003");
 
     }
 
-    @SuppressWarnings("MissingPermission")
-    private void setMapInfomation(){
+
+    //@SuppressWarnings("MissingPermission")
+    private void setMapInfomation() {
 
         // 設定地圖類型
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
@@ -182,7 +200,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setBuildingsEnabled(true);
 
         // 顯示目前所在位置
-        mMap.setMyLocationEnabled(true);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setMyLocationButtonEnabled(true);
+
+        } else {
+
+        }
 
         // Google地圖使用者操作界面功能設定
         UiSettings ui = mMap.getUiSettings();
@@ -198,17 +223,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ui.setRotateGesturesEnabled(true);
 
         //noinspection ResourceType
-        mMap.setMyLocationEnabled(true);
+        //mMap.setMyLocationEnabled(true);
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
                 String address = Helper.getAddressByLatLng(latLng);
-                if(address==null){
-                    Toast.makeText(context,"Not Found",Toast.LENGTH_SHORT).show();
-                }else{
-                    Toast.makeText(context,address,Toast.LENGTH_SHORT).show();
-                    playAnimateCamera(latLng,3000);
+                if (address == null) {
+                    Toast.makeText(context, "Not Found", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(context, address, Toast.LENGTH_SHORT).show();
+                    playAnimateCamera(latLng, 3000);
                     drawMarker(latLng);
                     moveMap(latLng);
                 }
@@ -231,7 +256,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-
     private void playAnimateCamera(LatLng latlng, int durationMs) {
         // 設置相關地圖相機位置參數，其中zoom的設定要 >=17才會顯示建築物
         CameraPosition cameraPos = new CameraPosition.Builder().target(latlng)
@@ -244,9 +268,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void drawMarker(LatLng latLng) {
-        drawMarker(latLng,false);
+        drawMarker(latLng, false);
     }
-    private void drawMarker(LatLng latLng,boolean isCurrentIcon) {
+
+    private void drawMarker(LatLng latLng, boolean isCurrentIcon) {
 
         // 1.建立 Marker
         MarkerOptions options = new MarkerOptions(); // 建立標記選項的實例
@@ -256,7 +281,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         options.anchor(0.5f, 1.0f); // 錨點
         options.draggable(true); // 是否可以拖曳標記?
 
-        if(isCurrentIcon) {
+        if (isCurrentIcon) {
             options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         }
         //options.
@@ -269,8 +294,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    private void replaceMarker(LatLng latLng){
-        if(currentLocation!=null) {
+    private void replaceMarker(LatLng latLng) {
+        if (currentLocation != null) {
             drawMarker(latLng);
         }
     }
@@ -292,23 +317,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         this.currentLocation = currentLocation;
     }
 
-    @Override
-    protected void onResume() throws SecurityException {
-        super.onResume();
+    public Location getmLastLocation() {
+        return mLastLocation;
+    }
 
-//        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 60000, 1, locationListener);
-//        setUpMapIfNeeded();
-//
-//        // 連線到Google API用戶端
-//        if (!googleApiClient.isConnected()) {
-//            googleApiClient.connect();
-//        }
+    public void setmLastLocation(Location mLastLocation) {
+        this.mLastLocation = mLastLocation;
+    }
 
+    public ListView getOrderListView() {
+        return orderListView;
+    }
+
+    public void setOrderListView(ListView orderListView) {
+        this.orderListView = orderListView;
     }
 
     @Override
-    protected void onPause() throws SecurityException{
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        int length=permissions.length;
+        String[] _permissions=new String[length+1];
+        _permissions[length+1]= Manifest.permission.MAPS_RECEIVE;
+        Log.i(TAG,_permissions[length+1]);
+        int start=0;
+        for(String _permission:permissions){
+            _permissions[start]=_permission;
+            Log.i(TAG,_permissions[start]);
+            start++;
+
+        }
+        Log.i(TAG,"004");
+        super.onRequestPermissionsResult(requestCode, _permissions, grantResults);
+    }
+
+    @Override
+    protected void onResume() throws SecurityException {
+        super.onResume();
+        updateLocation();
+        Log.i(TAG,"005");
+    }
+
+    @Override
+    protected void onPause() throws SecurityException {
         super.onPause();
+        Log.i(TAG,"006");
 //        locationManager.removeUpdates(locationListener);
 //        // 移除位置請求服務
 //        if (googleApiClient.isConnected()) {
@@ -319,29 +371,61 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onStart() {
-
         super.onStart();
-//        googleApiClient.connect();
+        mGoogleApiClient.connect();
+        updateLocation();
+        Log.i(TAG,"007");
     }
-
 
 
     @Override
     protected void onStop() {
         super.onStop();
-//
-//        // 移除Google API用戶端連線
-//        if (googleApiClient.isConnected()) {
-//            googleApiClient.disconnect();
-//        }
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+
+        Log.i(TAG,"008");
+
     }
 
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        // Refer to the javadoc for ConnectionResult to see what error codes might be returned in
+        // onConnectionFailed.
+        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
+        Log.i(TAG,"009");
+    }
 
     /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     * Runs when a GoogleApiClient object successfully connects.
      */
-    private GoogleApiClient client;
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
+            return;
+        }
+        Log.i(TAG,"010");
 
+        updateLocation();
+        Log.i(TAG,String.valueOf(mLastLocation));
+        Log.i(TAG,"011");
+    }
+    @Override
+    public void onConnectionSuspended(int i) {
+        // The connection to Google Play services was lost for some reason. We call connect() to
+        // attempt to re-establish the connection.
+        Log.i(TAG, "Connection suspended");
+        mGoogleApiClient.connect();
+        Log.i(TAG,"012");
+    }
+
+//    protected void createLocationRequest() {
+//        mLocationRequest = new LocationRequest();
+//        mLocationRequest.setInterval(10000);
+//        mLocationRequest.setFastestInterval(5000);
+//        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+//    }
 }
