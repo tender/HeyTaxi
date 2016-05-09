@@ -29,10 +29,11 @@ public class FunctionItemClickListener implements AdapterView.OnItemClickListene
                 activity.startActivityForResult(intentMap, START_LOCATION);
                 break;
             case 1:
-//                // 啟動地圖元件用的Intent物件
-//                Intent intentMapxx = new Intent(view.getContext().getApplicationContext(), MapsActivityXX.class);
-//                // 啟動地圖元件
-//                activity.startActivityForResult(intentMapxx, 1);
+                // 啟動地圖元件
+                Intent intentMapTest = new Intent(view.getContext().getApplicationContext(), MyLocationDemoActivity.class);
+                activity.startActivityForResult(intentMapTest, 1);
+                // 啟動地圖元件用的Intent物件
+
             default:
                 break;
         }
