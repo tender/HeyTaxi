@@ -2,6 +2,8 @@ package com.ta.heytaxi.com.ta.heytaxi.message;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -11,105 +13,97 @@ import org.fusesource.mqtt.client.Message;
 import org.fusesource.mqtt.client.QoS;
 import org.fusesource.mqtt.client.Topic;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 public class MQTTService extends Service {
-    private static String URL="tcp://127.0.0.1:1883";
 
-    private static final String TOPIC_INPUT = "camel/mqtt/test/input";
-    private static final String TOPIC_OUTPUT = "camel/mqtt/test/output";
+    private static String TAG="MQTTService";
+    private final IBinder messageBinder = new MessageBinder();
 
-    private static final String MESSAGE_INPUT = "SquarePants";
-    private static final String MESSAGE_OUTPUT = "Hello there " + MESSAGE_INPUT + " :-) ";
-
-    private static final String USER_NAME = "karaf";
-    private static final String PASSWORD = "karaf";
-    private static final String TAG="MQTTService";
-
-    private Topic outputTopic;
-    private MQTT mqtt;
-    private BlockingConnection publishConnection ;
-    private BlockingConnection subscribeConnection;
-
+    MessageHelper messageHelper;
+    Queue<String> store=new LinkedList<String>();
+    Consumer consumer;
+    String clientId;
+    String topic;
 
 
 
     public MQTTService() {
     }
 
+    // 實作 Binder
+    public class MessageBinder extends Binder {
+        public MQTTService getService() {
+            return MQTTService.this;
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return messageBinder;
     }
 
-    private MQTT createMQTTTcpConnection(String clientId, boolean clean) throws Exception {
-        MQTT mqtt = new MQTT();
-        mqtt.setConnectAttemptsMax(1);
-        mqtt.setReconnectAttemptsMax(0);
-        if (clientId != null) {
-            mqtt.setClientId(clientId);
-        }
-        mqtt.setCleanSession(clean);
-        mqtt.setHost(URL);
-        return mqtt;
+    @Override
+    public void onRebind(Intent intent) {
+        Log.d("mylog", "onRebind()");
+        super.onRebind(intent);
     }
 
-    private void  createConnection(String clientId,boolean clean){
-        outputTopic= new Topic(TOPIC_OUTPUT, QoS.AT_LEAST_ONCE);
-        mqtt= new MQTT();
+    @Override
+    public boolean onUnbind(Intent intent) {
+        Log.d("mylog", "onUnbind()");
+        //handler.removeCallbacks(showTime);
+        return super.onUnbind(intent);
+    }
+
+
+
+    @Override
+    public void onCreate() {
+
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        clientId=intent.getStringExtra("clientId");
+        topic=intent.getStringExtra("topic");
+        consumer=new ConsumerPahoImpl(clientId,store);
+        messageHelper=new MessageHelper(consumer,store);
         try {
-            mqtt.setConnectAttemptsMax(1);
-            mqtt.setReconnectAttemptsMax(0);
-            mqtt.setUserName(USER_NAME);
-            mqtt.setPassword(PASSWORD);
-            if (clientId != null) {
-                mqtt.setClientId(clientId);
-            }
-            mqtt.setCleanSession(clean);
-            mqtt.setHost(URL);
-
-
-            subscribeConnection = mqtt.blockingConnection();
-            subscribeConnection.connect();
-            subscribeConnection.subscribe(new Topic[]{outputTopic});
-
+            messageHelper.receive(topic);
         }catch(Exception e){
             Log.e(TAG,e.getMessage());
-            if(subscribeConnection != null){
-                try {
-                    subscribeConnection.disconnect();
-                }catch(Exception e1){
-                    Log.e(TAG,e1.getMessage());
-                }
-            }
         }
+        return super.onStartCommand(intent, flags, startId);
 
     }
 
-    private void publicMessage(){
-        try{
-            publishConnection = mqtt.blockingConnection();
-            publishConnection.connect();
-            publishConnection.publish(TOPIC_INPUT, MESSAGE_INPUT.getBytes(), QoS.AT_LEAST_ONCE, false);
-        }catch(Exception e){
-            Log.e(TAG,"Publish Message:"+e.getMessage());
-        }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
     }
 
-    private void receiveMessage(){
-
-        try {
-            while (isReceiveMessage()) {
-                Message message = subscribeConnection.receive(10000, TimeUnit.MILLISECONDS);
-                Log.i(TAG, "Receive Message" + message);
-            }
-        }catch(Exception e){
-            Log.e(TAG,"Receive Message Eroor:"+e.getMessage());
+    private void getMessages() {
+        Log.i(TAG,"getMessage().size:"+store.size());
+        //List<String> result=new ArrayList<String>();
+        List<String> vos=(List<String>)consumer.getMessages();
+        for(String vo:vos) {
+            Log.i(TAG,"getMessage() is :"+vo);
         }
+        //return result;
     }
 
-    private boolean isReceiveMessage(){
-        return true;
+
+    public MessageHelper getMessageHelper() {
+        return messageHelper;
+    }
+
+    public Queue<String> getStore() {
+        return store;
     }
 }

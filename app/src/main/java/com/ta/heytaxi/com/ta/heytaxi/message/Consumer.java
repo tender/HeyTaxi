@@ -1,9 +1,6 @@
 package com.ta.heytaxi.com.ta.heytaxi.message;
 
 
-import org.fusesource.mqtt.client.MQTT;
-import org.fusesource.mqtt.client.Message;
-
 import java.util.List;
 
 /**
@@ -11,9 +8,13 @@ import java.util.List;
  */
 public interface Consumer {
 
-    public void receive(MQTT mqtt,String topic) throws Exception;
+    public void receive(String topic) throws Exception;
 
-    public List<Message> getMessages();
+    public void createConnection(String url,boolean clean) throws Exception;
+
+    public List<?> getMessages();
 
     public String provideClientId();
+
+    public void disconnection() throws Exception;
 }
