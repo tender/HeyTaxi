@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -17,7 +18,7 @@ import org.fusesource.mqtt.client.QoS;
 
 public class ConsumerPahoImpl implements Consumer,MqttCallback{
 	
-	private int qos = 0;
+	private int qos = 1;
 	private Queue<String> messages;
 	private boolean isStopReceive=false;
 	private String clientId;
@@ -84,14 +85,14 @@ public class ConsumerPahoImpl implements Consumer,MqttCallback{
 		mqtt.subscribe(new String[]{topic},new int[]{qos});
 
         // Wait for the message to be received
-        try {
-            latch.await(); // block here until message received, and latch will flip
-        } catch (InterruptedException e) {
-            System.out.println("I was awoken while waiting");
-        }
-        
+		try {
+				latch.await(10,TimeUnit.SECONDS); // block here until message received, and latch will flip
+		} catch (InterruptedException e) {
+				System.out.println("I was awoken while waiting");
+		}
+
         // Disconnect the client
-        mqtt.disconnect();
+        disconnection();
         System.out.println("Exiting");
 
 		

@@ -16,6 +16,7 @@ public class MessageHelper {
     private Producer _producer;
     private Consumer _consumer;
     Queue<String> store;
+    private boolean isStopReceive=false;
 
 
     public MessageHelper(Producer _producer,Queue<String> store){
@@ -47,11 +48,10 @@ public class MessageHelper {
     }
 
     public void receive(String topic) throws Exception{
-        getConsumer().createConnection(URL,false);
+        getConsumer().createConnection(URL, false);
         getConsumer().receive(topic);
         System.out.println("Receive");
         //return getConsumer().getMessages();
-
     }
 
     public List<String> getMessages() {

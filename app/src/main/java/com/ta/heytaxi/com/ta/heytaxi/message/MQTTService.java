@@ -31,7 +31,19 @@ public class MQTTService extends Service {
     String clientId;
     String topic;
 
+    private Handler handler = new Handler();
+    private Runnable receiverMessage = new Runnable() {
+        public void run() {
+            try {
+                messageHelper.receive(topic);
+                handler.postDelayed(this, 5000);
+                getStoreMessages();
+            }catch(Exception e){
+                Log.e(TAG,e.getMessage());
+            }
 
+        }
+    };
 
     public MQTTService() {
     }
@@ -74,11 +86,12 @@ public class MQTTService extends Service {
         topic=intent.getStringExtra("topic");
         consumer=new ConsumerPahoImpl(clientId,store);
         messageHelper=new MessageHelper(consumer,store);
-        try {
-            messageHelper.receive(topic);
-        }catch(Exception e){
-            Log.e(TAG,e.getMessage());
-        }
+//        try {
+            handler.post(receiverMessage);
+//
+//        }catch(Exception e){
+//            Log.e(TAG,e.getMessage());
+//        }
         return super.onStartCommand(intent, flags, startId);
 
     }
@@ -88,8 +101,8 @@ public class MQTTService extends Service {
         super.onDestroy();
     }
 
-    private void getMessages() {
-        Log.i(TAG,"getMessage().size:"+store.size());
+    private void getStoreMessages() {
+        Log.i(TAG,"getStoreMessage().size:"+store.size());
         //List<String> result=new ArrayList<String>();
         List<String> vos=(List<String>)consumer.getMessages();
         for(String vo:vos) {

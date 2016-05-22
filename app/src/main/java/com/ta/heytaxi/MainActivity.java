@@ -32,8 +32,8 @@ public class MainActivity extends AppCompatActivity {
     GridView gridView;
     Context context;
 
-//    private ServiceConnection serviceConnection;
-//    private MQTTService messageService;
+    private ServiceConnection serviceConnection;
+    private MQTTService messageService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             startMessageService();
+            //callMessageService();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -68,47 +69,53 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startMessageService()throws Exception{
-       Intent msi=new Intent(this,MQTTService.class);
+        Intent msi=new Intent(this,MQTTService.class);
         msi.putExtra("clientId","consumer_user");
         msi.putExtra("topic","HeyTaxi Message Server");
-        startService(msi);
+
 
 
         // 實作 ServiceConnection
-//        serviceConnection = new ServiceConnection() {
-//            @Override
-//            public void onServiceConnected(ComponentName name, IBinder service) {
-//                messageService = ((MQTTService.MessageBinder)service).getService();
-//                Toast.makeText(context, messageService+"", Toast.LENGTH_SHORT).show();
-//                Log.i("mylog", "onServiceConnected".toString());
-//            }
-//            @Override
-//            public void onServiceDisconnected(ComponentName name) {
-//                messageService = null;
-//                Log.i("mylog", "onServiceDisconnected".toString());
-//            }
-//        };
-//        bindService(msi, serviceConnection,
-//                Context.BIND_AUTO_CREATE);
+/*        serviceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                messageService = ((MQTTService.MessageBinder)service).getService();
+                Toast.makeText(context, messageService+"", Toast.LENGTH_SHORT).show();
+                Log.i("mylog", "onServiceConnected".toString());
+            }
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                messageService = null;
+                Log.i("mylog", "onServiceDisconnected".toString());
+            }
+        };
+        bindService(msi, serviceConnection,
+                Context.BIND_AUTO_CREATE);*/
+
+        startService(msi);
 
         Log.i(TAG,"Start Message Service ");
-//        try {
-//            Thread.sleep(10000);
-//            Log.i(TAG,"DDDDDDDDD");
-//            if(messageService!=null){
-//                MessageHelper helper=messageService.getMessageHelper();
-//                Queue<String> value=messageService.getStore();
-//                Consumer consumer=helper.getConsumer();
-//                List<String> vos= (List<String>) consumer.getMessages();
-//                for(String vo:vos){
-//                    Log.i(TAG,"MainActivity --->getMessage:"+vo);
-//                }
-//            }else{
-//                Log.i(TAG,"MESSAGE SERVICE IS NULL");
-//            }
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+
+    }
+
+    private void callMessageService(){
+        try {
+            Thread.sleep(10000);
+            Log.i(TAG,"DDDDDDDDD");
+            if(messageService!=null){
+                MessageHelper helper=messageService.getMessageHelper();
+                Queue<String> value=messageService.getStore();
+                Consumer consumer=helper.getConsumer();
+                List<String> vos= (List<String>) consumer.getMessages();
+                for(String vo:vos){
+                    Log.i(TAG,"MainActivity --->getMessage:"+vo);
+                }
+            }else{
+                Log.i(TAG,"MESSAGE SERVICE IS NULL");
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 
