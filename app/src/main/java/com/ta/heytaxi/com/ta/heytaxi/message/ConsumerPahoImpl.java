@@ -18,7 +18,7 @@ import org.fusesource.mqtt.client.QoS;
 
 public class ConsumerPahoImpl implements Consumer,MqttCallback{
 	
-	private int qos = 1;
+	private int qos = 0;
 	private Queue<String> messages;
 	private boolean isStopReceive=false;
 	private String clientId;

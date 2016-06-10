@@ -1,6 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        release {
+            keyAlias 'heytaxi'
+            keyPassword 'heytaxi'
+            storeFile file('/Users/IT-0002993/heytaxi.keystore')
+            storePassword 'heytaxi'
+        }
+    }
     compileSdkVersion 23
     buildToolsVersion '23.0.3'
     defaultConfig {
@@ -9,11 +17,13 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+        signingConfig signingConfigs.release
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
@@ -25,9 +35,8 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
-    //    compile 'org.apache.activemq:activemq-all:5.13.2'
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.google.android.gms:play-services:8.4.0'
     compile 'com.google.android.gms:play-services-location:8.4.0'
@@ -35,4 +44,8 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:23.3.0'
     compile 'org.fusesource.mqtt-client:mqtt-client:1.12'
     compile 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.0.2'
+    compile 'com.google.android.gms:play-services-ads:8.4.0'
+    compile 'com.google.android.gms:play-services-auth:8.4.0'
+    compile 'com.google.android.gms:play-services-gcm:8.4.0'
+    compile 'com.android.support:design:23.3.0'
 }

@@ -27,6 +27,7 @@ import java.util.Queue;
 public class MainActivity extends AppCompatActivity {
 
     private final static String TAG="MainActivity";
+    private final static boolean MESSAGE_ENABLED=false;
     List<FunctionItem> functionItemsForDriver=new ArrayList<FunctionItem>(10);
     List<FunctionItem> functionItemsForCustomer=new ArrayList<FunctionItem>(10);
     GridView gridView;
@@ -60,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         gridView.setOnItemClickListener(new FunctionItemClickListener(this));
 
         try {
-            startMessageService();
+            //startMessageService(MESSAGE_ENABLED);
             //callMessageService();
         } catch (Exception e) {
             e.printStackTrace();
@@ -68,7 +69,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void startMessageService()throws Exception{
+    private void startMessageService(boolean enabled)throws Exception{
+        if(!enabled)
+            return;
         Intent msi=new Intent(this,MQTTService.class);
         msi.putExtra("clientId","consumer_user");
         msi.putExtra("topic","HeyTaxi Message Server");
