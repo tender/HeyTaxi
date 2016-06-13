@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import org.fusesource.mqtt.client.Message;
+
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -64,7 +64,7 @@ public class TestMessageHelper {
 		helper.setConsumer(consumer);
 		//MQTT client=null;
 		String topic="HeyTaxi Message Server";
-		List<Message> messages=new ArrayList<Message>();
+		//List<Message> messages=new ArrayList<Message>();
 		try{
 			//client=helper.createConnection(false);
 			helper.receive(topic);

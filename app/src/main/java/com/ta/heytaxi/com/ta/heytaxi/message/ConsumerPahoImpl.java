@@ -14,7 +14,7 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.fusesource.mqtt.client.QoS;
+
 
 public class ConsumerPahoImpl implements Consumer,MqttCallback{
 	

@@ -7,11 +7,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
-import org.fusesource.mqtt.client.BlockingConnection;
-import org.fusesource.mqtt.client.MQTT;
-import org.fusesource.mqtt.client.Message;
-import org.fusesource.mqtt.client.QoS;
-import org.fusesource.mqtt.client.Topic;
 
 import java.util.ArrayList;
 import java.util.Date;
