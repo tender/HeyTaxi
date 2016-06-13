@@ -18,7 +18,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 public class ConsumerPahoImpl implements Consumer,MqttCallback{
 	
-	private int qos = 1;
+	private int qos = 0;
 	private Queue<String> messages;
 	private boolean isStopReceive=false;
 	private String clientId;

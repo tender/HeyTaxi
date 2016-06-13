@@ -11,7 +11,7 @@ import java.util.Queue;
 public class MessageHelper {
 
     //private static final String URL="tcp://127.0.0.1:1883";
-    private static final String URL="tcp://192.168.0.101:1883";
+    private static final String URL="tcp://192.168.0.104:1883";
 
     private Producer _producer;
     private Consumer _consumer;

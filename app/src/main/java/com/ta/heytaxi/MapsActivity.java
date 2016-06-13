@@ -1,5 +1,6 @@
 package com.ta.heytaxi;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -60,10 +61,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
         context = this;
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        mapFragment.onActivityCreated(savedInstanceState);
         mapFragment.getMapAsync(this);
+        mMap=mapFragment.getMap();
 
         buildGoogleApiClient();
 
@@ -102,14 +106,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Register the listener with the Location Manager to receive location updates
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+            ActivityCompat.requestPermissions(this
+                    ,new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION}
+                    ,200);
+
         }
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 9000, 0, locationListener);
 
@@ -346,7 +346,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         int length=permissions.length;
         String[] _permissions=new String[length+1];
-        _permissions[length+1]= Manifest.permission.MAPS_RECEIVE;
+        _permissions[length+1]= Manifest.permission.ACCESS_FINE_LOCATION;
         Log.i(TAG,_permissions[length+1]);
         int start=0;
         for(String _permission:permissions){
