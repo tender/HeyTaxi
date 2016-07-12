@@ -40,6 +40,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 {
     protected static final String TAG = "MainActivity";
+    private static final int REQUEST_LOCATION=2;
     private Context context;
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
@@ -67,10 +68,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.onActivityCreated(savedInstanceState);
         mapFragment.getMapAsync(this);
-        mMap=mapFragment.getMap();
+       //mMap=mapFragment.getMap();
 
-        buildGoogleApiClient();
-
+        if(mGoogleApiClient !=null) {
+            buildGoogleApiClient();
+        }
         orderListView = (ListView) findViewById(R.id.orderlistView);
         items = createOrderItems();
 
@@ -108,14 +110,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this
                     ,new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION}
-                    ,200);
+                    ,REQUEST_LOCATION);
 
+        }else{
+            mMap.setMyLocationEnabled(true);
         }
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 9000, 0, locationListener);
 
-        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        Log.i("current location", String.valueOf(location));
-        Log.i(TAG,"002");
     }
 
     private void makeUseOfNewLocation(Location location) {
@@ -186,14 +187,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultTaipei));
         //moveMap(defaultTaipei);
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-        }
-        else{
-
-            mMap.setMyLocationEnabled(true);
-            mMap.getUiSettings().setMyLocationButtonEnabled(true);
-        }
 
         updateLocation();
         putCustomerOrderInfoToMap(items);
@@ -213,9 +206,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // 顯示目前所在位置
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-     } else {
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},REQUEST_LOCATION);
+        } else {
             mMap.setMyLocationEnabled(true);
-            mMap.getUiSettings().setMyLocationButtonEnabled(true);
         }
 
         // Google地圖使用者操作界面功能設定
@@ -344,19 +337,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        int length=permissions.length;
-        String[] _permissions=new String[length+1];
-        _permissions[length+1]= Manifest.permission.ACCESS_FINE_LOCATION;
-        Log.i(TAG,_permissions[length+1]);
-        int start=0;
-        for(String _permission:permissions){
-            _permissions[start]=_permission;
-            Log.i(TAG,_permissions[start]);
-            start++;
+        switch(requestCode){
+            case REQUEST_LOCATION:
+                if(grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                    //noinspection MissingPermission
+                    mMap.setMyLocationEnabled(true);
+                }else{
 
+                }
+            break;
         }
+
         Log.i(TAG,"004");
-        super.onRequestPermissionsResult(requestCode, _permissions, grantResults);
     }
 
     @Override
@@ -370,38 +362,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onPause() throws SecurityException {
         super.onPause();
         Log.i(TAG,"006");
-//        locationManager.removeUpdates(locationListener);
-//        // 移除位置請求服務
-//        if (googleApiClient.isConnected()) {
-//            LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
-//        }
     }
 
 
     @Override
     protected void onStart() {
-        super.onStart();
         mGoogleApiClient.connect();
-        updateLocation();
+        super.onStart();
         Log.i(TAG,"007");
     }
 
 
     @Override
     protected void onStop() {
-        super.onStop();
         if (mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
-
-        Log.i(TAG,"008");
+        super.onStop();
+      Log.i(TAG,"008");
 
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        // Refer to the javadoc for ConnectionResult to see what error codes might be returned in
-        // onConnectionFailed.
+
+        //noinspection MissingPermission
+        Location location=LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if(location !=null){
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),location.getLongitude()),15));
+        }
         Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
         Log.i(TAG,"009");
     }

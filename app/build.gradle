@@ -9,7 +9,7 @@ android {
             storePassword 'heytaxi'
         }
     }
-    compileSdkVersion 23
+    compileSdkVersion 'Google Inc.:Google APIs:23'
     buildToolsVersion '23.0.3'
     defaultConfig {
         applicationId "com.ta.heytaxi"
@@ -17,6 +17,11 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
+        jackOptions {
+            enabled false
+        }
+        signingConfig signingConfigs.release
     }
     buildTypes {
         release {
@@ -35,12 +40,10 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
-    //    compile 'org.apache.activemq:activemq-all:5.13.2'
-    compile 'com.android.support:appcompat-v7:24.0.0-beta1'
     compile 'com.google.android.gms:play-services:9.0.2'
     compile 'com.google.android.gms:play-services-location:9.0.2'
-    compile 'com.android.support:support-annotations:24.0.0-beta1'
-    compile 'com.android.support:recyclerview-v7:24.0.0-beta1'
+    compile 'com.android.support:support-annotations:24.0.0'
+    compile 'com.android.support:recyclerview-v7:24.0.0'
     compile 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.0.2'
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.google.android.gms:play-services-ads:9.0.2'

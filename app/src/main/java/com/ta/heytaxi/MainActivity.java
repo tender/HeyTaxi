@@ -1,28 +1,16 @@
 package com.ta.heytaxi;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
-import android.os.IBinder;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
-import android.widget.Toast;
-
-import com.ta.heytaxi.com.ta.heytaxi.message.Consumer;
-import com.ta.heytaxi.com.ta.heytaxi.message.MQTTService;
-import com.ta.heytaxi.com.ta.heytaxi.message.MessageHelper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     Context context;
 
     private ServiceConnection serviceConnection;
-    private MQTTService messageService;
+    //private MQTTService messageService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+/*
 
     private void startMessageService(boolean enabled)throws Exception{
         if(!enabled)
@@ -79,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         // 實作 ServiceConnection
+*/
 /*        serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
@@ -93,16 +83,18 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         bindService(msi, serviceConnection,
-                Context.BIND_AUTO_CREATE);*/
+                Context.BIND_AUTO_CREATE);*//*
+
 
         startService(msi);
 
         Log.i(TAG,"Start Message Service ");
 
     }
+*/
 
     private void callMessageService(){
-        try {
+/*        try {
             Thread.sleep(10000);
             Log.i(TAG,"DDDDDDDDD");
             if(messageService!=null){
@@ -118,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 
