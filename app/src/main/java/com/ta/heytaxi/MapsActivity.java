@@ -3,11 +3,13 @@ package com.ta.heytaxi;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -37,9 +39,8 @@ import java.util.Random;
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
-
 {
-    protected static final String TAG = "MainActivity";
+    protected static final String TAG = "MapActivity";
     private static final int REQUEST_LOCATION=2;
     private Context context;
     private GoogleMap mMap;
@@ -66,23 +67,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         context = this;
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-        mapFragment.onActivityCreated(savedInstanceState);
+        //mapFragment.onActivityCreated(savedInstanceState);
         mapFragment.getMapAsync(this);
        //mMap=mapFragment.getMap();
 
-        if(mGoogleApiClient !=null) {
-            buildGoogleApiClient();
+        if(mGoogleApiClient==null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
         }
-        orderListView = (ListView) findViewById(R.id.orderlistView);
-        items = createOrderItems();
+//        orderListView = (ListView) findViewById(R.id.orderlistView);
+//        items = createOrderItems();
+//
+//        adapter = new CustomerOrderAdapter(items, this);
+//        orderListView.setAdapter(adapter);
+//        orderListView.setOnItemClickListener(this);
 
-        adapter = new CustomerOrderAdapter(items, this);
-        orderListView.setAdapter(adapter);
-        orderListView.setOnItemClickListener(this);
-
-        updateLocation();
-        Log.i(TAG, "001");
-        //updateLocation();
 
     }
 
@@ -97,34 +99,70 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .build();
     }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        setMapInfomation();
 
-    protected void updateLocation() {
-
-        // Acquire a reference to the system Location Manager
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
-        // Define a listener that responds to location updatesF
-        LocationListener locationListener = new OrderLocationListener();
-
-        // Register the listener with the Location Manager to receive location updates
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this
-                    ,new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION}
-                    ,REQUEST_LOCATION);
-
+            ActivityCompat.requestPermissions(this,new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION},REQUEST_LOCATION);
         }else{
-            mMap.setMyLocationEnabled(true);
+            setupMyLocation();
         }
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 9000, 0, locationListener);
+
+
+//        mMap.addMarker(new MarkerOptions().position(defaultTaipei).title("Marker in Taipei"));
+//        mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultTaipei));
+        //moveMap(defaultTaipei);
+
+        //putCustomerOrderInfoToMap(items);
 
     }
+
+    private void setupMyLocation() {
+        //noinspection MissingPermission
+        mMap.setMyLocationEnabled(true);
+
+        mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+            @Override
+            public boolean onMyLocationButtonClick() {
+
+                LocationManager locationManager=(LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                Criteria criteria=new Criteria();
+                criteria.setAccuracy(Criteria.ACCURACY_FINE);
+                String provider=locationManager.getBestProvider(criteria,true);
+                //noinspection MissingPermission
+                Location location=locationManager.getLastKnownLocation(provider);
+                if(location !=null){
+                    Log.i("LOCATION",location.getLatitude()+"/"+location.getLongitude());
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                            new LatLng(location.getLatitude(),location.getLongitude())
+                            ,19));
+                }
+                return true;
+            }
+        });
+    }
+
+    private void loadData(LatLng _location){
+        orderListView = (ListView) findViewById(R.id.orderlistView);
+        items = createOrderItems(_location);
+
+        adapter = new CustomerOrderAdapter(items, this);
+        orderListView.setAdapter(adapter);
+        orderListView.setOnItemClickListener(this);
+
+        putCustomerOrderInfoToMap(items);
+    }
+
+
 
     private void makeUseOfNewLocation(Location location) {
         Log.i("current location", String.valueOf(location.getLatitude()));
         Log.i("current location", String.valueOf(location.getLongitude()));
     }
 
-    private List<CustomerOrder> createOrderItems() {
+    private List<CustomerOrder> createOrderItems(LatLng _location) {
         Random rand = new Random();
         List<CustomerOrder> result = new ArrayList<CustomerOrder>();
         CustomerOrder order;
@@ -137,8 +175,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             order.setOrderNO("00000" + i);
             int x = ((rand.nextInt(2) + 1) % 2 == 0) ? -1 : 1;
             int y = ((rand.nextInt(2) + 1) % 2 == 0) ? -1 : 1;
-            latLng = new LatLng(defaultTaipei.latitude - (i * x * 0.0003), defaultTaipei.longitude - (i * y * 0.0005));
-            //order.setCurrentLocation(Helper.getAddressByLatLng(latLng));
+            latLng = new LatLng(_location.latitude - (i * x * 0.0003), _location.longitude - (i * y * 0.0005));
+            order.setCurrentLocation(Helper.getAddressByLatLng(latLng));
             order.setCurrentLocationByLatLng(latLng);
             result.add(order);
         }
@@ -176,26 +214,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    //@SuppressWarnings("MissingPermission")
-    @Override
-    public void onMapReady(GoogleMap map) {
-        mMap = map;
-        setMapInfomation();
-        // Add a marker in Sydney, Australia, and move the camera.
-
-        mMap.addMarker(new MarkerOptions().position(defaultTaipei).title("Marker in Taipei"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultTaipei));
-        //moveMap(defaultTaipei);
-
-
-        updateLocation();
-        putCustomerOrderInfoToMap(items);
-        Log.i(TAG,"003");
-
-    }
-
-
-
     private void setMapInfomation() {
 
         // 設定地圖類型
@@ -203,13 +221,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // 地圖上顯示建築物
         // 注意：zoom的設定要 >=17才會顯示建築物
         mMap.setBuildingsEnabled(true);
-
-        // 顯示目前所在位置
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},REQUEST_LOCATION);
-        } else {
-            mMap.setMyLocationEnabled(true);
-        }
 
         // Google地圖使用者操作界面功能設定
         UiSettings ui = mMap.getUiSettings();
@@ -291,7 +302,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // 2.將Marker加入到地圖中
         mMap.addMarker(options);
         // 3.移動到Marker
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
 
 
     }
@@ -341,83 +352,67 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             case REQUEST_LOCATION:
                 if(grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
                     //noinspection MissingPermission
-                    mMap.setMyLocationEnabled(true);
+                    setupMyLocation();
                 }else{
 
                 }
-            break;
+                break;
         }
 
-        Log.i(TAG,"004");
-    }
-
-    @Override
-    protected void onResume() throws SecurityException {
-        super.onResume();
-        updateLocation();
-        Log.i(TAG,"005");
-    }
-
-    @Override
-    protected void onPause() throws SecurityException {
-        super.onPause();
-        Log.i(TAG,"006");
     }
 
 
-    @Override
-    protected void onStart() {
-        mGoogleApiClient.connect();
-        super.onStart();
-        Log.i(TAG,"007");
-    }
+//    @Override
+//    protected void onResume() throws SecurityException {
+//        super.onResume();
+//        setupMyLocation();
+//
+//    }
+//
+//    @Override
+//    protected void onPause() throws SecurityException {
+//        super.onPause();
+//    }
 
-
     @Override
-    protected void onStop() {
-        if (mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
+    public void onConnected(@Nullable Bundle bundle) {
+        //noinspection MissingPermission
+        Location location=LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        ///setMapInfomation();
+        if(location !=null){
+            Log.i("LOCATION",location.getLatitude()+"/"+location.getLongitude());
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                    new LatLng(location.getLatitude(),location.getLongitude())
+                    ,19));
+            LatLng latLng=new LatLng(location.getLatitude(),location.getLongitude());
+            mMap.addMarker(new MarkerOptions().position(latLng).title("My Home"));
+
+            Log.i("LOCATION","222222222222222");
+            loadData(latLng);
+            moveMap(latLng);
         }
-        super.onStop();
-      Log.i(TAG,"008");
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
 
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
-        //noinspection MissingPermission
-        Location location=LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if(location !=null){
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),location.getLongitude()),15));
-        }
-        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
-        Log.i(TAG,"009");
     }
 
-    /**
-     * Runs when a GoogleApiClient object successfully connects.
-     */
     @Override
-    public void onConnected(Bundle connectionHint) {
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            return;
-        }
-        Log.i(TAG,"010");
-
-        updateLocation();
-        Log.i(TAG,String.valueOf(mLastLocation));
-        Log.i(TAG,"011");
-    }
-    @Override
-    public void onConnectionSuspended(int i) {
-        // The connection to Google Play services was lost for some reason. We call connect() to
-        // attempt to re-establish the connection.
-        Log.i(TAG, "Connection suspended");
+    protected void onStart() {
         mGoogleApiClient.connect();
-        Log.i(TAG,"012");
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        mGoogleApiClient.disconnect();
+        super.onStop();
     }
 
 //    protected void createLocationRequest() {
