@@ -102,15 +102,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        setMapInfomation();
+
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION},REQUEST_LOCATION);
         }else{
             setupMyLocation();
         }
-
-
+        setMapInfomation();
 //        mMap.addMarker(new MarkerOptions().position(defaultTaipei).title("Marker in Taipei"));
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultTaipei));
         //moveMap(defaultTaipei);
@@ -123,7 +122,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //noinspection MissingPermission
         mMap.setMyLocationEnabled(true);
 
-        mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+/*        mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
             @Override
             public boolean onMyLocationButtonClick() {
 
@@ -141,7 +140,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 return true;
             }
-        });
+        });*/
     }
 
     private void loadData(LatLng _location){
@@ -190,11 +189,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.i("CustomerOrder", _item.toString());
 
             if (isFirst) {
-                drawMarker(_item.getCurrentLocationByLatLng(), isFirst);
+                drawMarker(_item.getCurrentLocationByLatLng(), _item.getName(),isFirst);
                 currentLocation = _item.getCurrentLocationByLatLng();
                 isFirst = false;
             } else {
-                drawMarker(_item.getCurrentLocationByLatLng(), isFirst);
+                drawMarker(_item.getCurrentLocationByLatLng(),_item.getName(), isFirst);
             }
         }
         if (_items.size() > 0) {
@@ -208,7 +207,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng value = ((CustomerOrder) parent.getAdapter().getItem(position)).getCurrentLocationByLatLng();
 
         playAnimateCamera(value, 3000);
-        drawMarker(value, true);
+        drawMarker(value,"", true);
         moveMap(value);
         setCurrentLocation(value);
 
@@ -281,15 +280,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void drawMarker(LatLng latLng) {
-        drawMarker(latLng, false);
+        drawMarker(latLng,"", false);
     }
 
-    private void drawMarker(LatLng latLng, boolean isCurrentIcon) {
+    private void drawMarker(LatLng latLng, String title,boolean isCurrentIcon) {
 
         // 1.建立 Marker
         MarkerOptions options = new MarkerOptions(); // 建立標記選項的實例
         options.position(latLng); // 標記經緯度
-        options.title(""); // Info-Window標題
+        options.title(title); // Info-Window標題
         options.snippet("緯經度:" + latLng); // Info-Window標記摘要
         options.anchor(0.5f, 1.0f); // 錨點
         options.draggable(true); // 是否可以拖曳標記?
@@ -378,7 +377,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onConnected(@Nullable Bundle bundle) {
         //noinspection MissingPermission
         Location location=LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        ///setMapInfomation();
+        setMapInfomation();
         if(location !=null){
             Log.i("LOCATION",location.getLatitude()+"/"+location.getLongitude());
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
