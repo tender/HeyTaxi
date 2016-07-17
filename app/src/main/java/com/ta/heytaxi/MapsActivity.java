@@ -1,11 +1,10 @@
 package com.ta.heytaxi;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -30,7 +29,9 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
@@ -184,7 +185,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void putCustomerOrderInfoToMap(List<CustomerOrder> _items) {
         boolean isFirst = true;
-        MarkerOptions marker = null;
+        Marker marker = null;
         for (CustomerOrder _item : _items) {
             Log.i("CustomerOrder", _item.toString());
 
@@ -210,7 +211,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         drawMarker(value,"", true);
         moveMap(value);
         setCurrentLocation(value);
-
     }
 
     private void setMapInfomation() {
@@ -292,7 +292,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         options.snippet("緯經度:" + latLng); // Info-Window標記摘要
         options.anchor(0.5f, 1.0f); // 錨點
         options.draggable(true); // 是否可以拖曳標記?
-
+        options.icon(BitmapDescriptorFactory.fromResource(R.drawable.taxi));
         if (isCurrentIcon) {
             options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         }
@@ -303,7 +303,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // 3.移動到Marker
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
 
-
     }
 
     private void replaceMarker(LatLng latLng) {
@@ -312,6 +311,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    private void drawCircle(LatLng _location){
+        CircleOptions options=new CircleOptions();
+        options.center(_location);
+        options.radius(100);
+        options.strokeWidth(5);
+        options.strokeColor(Color.TRANSPARENT);
+        options.fillColor(Color.argb(150,255,0,0));
+        options.zIndex(3);
+        mMap.addCircle(options);
+
+    }
+    private void removeCircle(LatLng _location){
+        mMap.clear();
+
+    }
 
     public List<CustomerOrder> getItems() {
         return items;
@@ -385,10 +399,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     ,19));
             LatLng latLng=new LatLng(location.getLatitude(),location.getLongitude());
             mMap.addMarker(new MarkerOptions().position(latLng).title("My Home"));
-
             Log.i("LOCATION","222222222222222");
             loadData(latLng);
             moveMap(latLng);
+            drawCircle(latLng);
         }
     }
 

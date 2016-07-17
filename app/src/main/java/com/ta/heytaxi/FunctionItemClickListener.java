@@ -11,6 +11,7 @@ import android.widget.Toast;
  */
 public class FunctionItemClickListener implements AdapterView.OnItemClickListener {
     private static final int START_LOCATION = 0;
+    private static final int REGISTER = 2;
     private Activity activity;
 
 
@@ -29,11 +30,13 @@ public class FunctionItemClickListener implements AdapterView.OnItemClickListene
                 activity.startActivityForResult(intentMap, START_LOCATION);
                 break;
             case 1:
-                // 啟動地圖元件
                 Intent intentMapTest = new Intent(view.getContext().getApplicationContext(), MyLocationDemoActivity.class);
                 activity.startActivityForResult(intentMapTest, 1);
+            case 2:
+                // 啟動地圖元件
+                Intent intentRegister = new Intent(view.getContext().getApplicationContext(), RegisterActivity.class);
+                activity.startActivityForResult(intentRegister,REGISTER);
                 // 啟動地圖元件用的Intent物件
-
             default:
                 break;
         }
